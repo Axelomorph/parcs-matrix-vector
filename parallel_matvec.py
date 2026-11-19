@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import random
 import time
 from Pyro4 import expose
@@ -13,7 +14,7 @@ class Solver:
     def solve(self):
         print("Job Started")
         num_workers = len(self.workers)
-        print(f"Workers: {num_workers}")
+        print("Workers: %d" % num_workers)
         if num_workers == 0:
             raise RuntimeError("No workers available for parallel execution.")
 
@@ -23,7 +24,7 @@ class Solver:
         matrix_a = [[rng.random() for _ in range(cols_m)] for _ in range(rows_n)]
         vec_x = [rng.random() for _ in range(cols_m)]
 
-        t_start = time.perf_counter()
+        t_start = time.time()
 
         step = rows_n // num_workers
         mapped = []
@@ -34,7 +35,7 @@ class Solver:
             mapped.append(self.workers[i].mymap(chunk, vec_x))
 
         result_y = self.myreduce(mapped)
-        t_elapsed = time.perf_counter() - t_start
+        t_elapsed = time.time() - t_start
 
         self.write_output(result_y, t_elapsed, num_workers, rows_n, cols_m, seed)
         print("Job Finished")
@@ -60,22 +61,23 @@ class Solver:
         return output
 
     def read_input(self):
-        # Формат вхідного файлу: "N M seed"
-        with open(self.input_file_name, "r", encoding="utf-8") as f:
+        with open(self.input_file_name, "r") as f:
             parts = f.read().strip().split()
         if not parts:
-            raise ValueError(f"Input file '{self.input_file_name}' is empty.")
+            raise ValueError("Input file '%s' is empty." % str(self.input_file_name))
         rows_n = int(parts[0])
         cols_m = int(parts[1]) if len(parts) > 1 else rows_n
         seed = int(parts[2]) if len(parts) > 2 else 42
         return rows_n, cols_m, seed
 
     def write_output(self, output, elapsed, num_workers, rows_n, cols_m, seed):
-        summary = f"mode=parallel size={rows_n}x{cols_m} seed={seed} workers={num_workers} time={elapsed:.6f}s"
-        preview = " ".join(f"{val:.6f}" for val in output[:10])
+        summary = "mode=parallel size=%dx%d seed=%d workers=%d time=%.6fs" % (
+            rows_n, cols_m, seed, num_workers, elapsed
+        )
+        preview = " ".join("%.6f" % val for val in output[:10])
         print(summary)
-        print(f"preview: {preview}")
+        print("preview: %s" % preview)
         if self.output_file_name:
-            with open(self.output_file_name, "w", encoding="utf-8") as f:
+            with open(self.output_file_name, "w") as f:
                 f.write(summary + "\n")
                 f.write(preview + "\n")
