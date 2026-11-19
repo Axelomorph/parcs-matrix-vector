@@ -1,14 +1,16 @@
+# -*- coding: utf-8 -*-
 import random
 import sys
 import time
 
 
 def read_input(input_file_name):
-    # Формат вхідного файлу: "N M seed"
-    with open(input_file_name, "r", encoding="utf-8") as f:
-        parts = f.read().strip().split()
+    # Input format: "N M seed"
+    f = open(input_file_name, "r")
+    parts = f.read().strip().split()
+    f.close()
     if not parts:
-        raise ValueError(f"Input file '{input_file_name}' is empty.")
+        raise ValueError("Input file '%s' is empty." % str(input_file_name))
     rows_n = int(parts[0])
     cols_m = int(parts[1]) if len(parts) > 1 else rows_n
     seed = int(parts[2]) if len(parts) > 2 else 42
@@ -16,14 +18,17 @@ def read_input(input_file_name):
 
 
 def write_output(output_file_name, output, elapsed, num_workers, rows_n, cols_m, seed):
-    summary = f"mode=sequential size={rows_n}x{cols_m} seed={seed} workers={num_workers} time={elapsed:.6f}s"
-    preview = " ".join(f"{val:.6f}" for val in output[:10])
+    summary = "mode=sequential size=%dx%d seed=%d workers=%d time=%.6fs" % (
+        rows_n, cols_m, seed, num_workers, elapsed
+    )
+    preview = " ".join("%.6f" % val for val in output[:10])
     print(summary)
-    print(f"preview: {preview}")
+    print("preview: %s" % preview)
     if output_file_name:
-        with open(output_file_name, "w", encoding="utf-8") as f:
-            f.write(summary + "\n")
-            f.write(preview + "\n")
+        f = open(output_file_name, "w")
+        f.write(summary + "\n")
+        f.write(preview + "\n")
+        f.close()
 
 
 def matvec_sequential(matrix_a, vec_x):
@@ -46,9 +51,9 @@ def main():
     matrix_a = [[rng.random() for _ in range(cols_m)] for _ in range(rows_n)]
     vec_x = [rng.random() for _ in range(cols_m)]
 
-    start_time = time.perf_counter()
+    start_time = time.time()
     res = matvec_sequential(matrix_a, vec_x)
-    elapsed = time.perf_counter() - start_time
+    elapsed = time.time() - start_time
 
     write_output(output_file_name, res, elapsed, 1, rows_n, cols_m, seed)
 
